@@ -1,27 +1,30 @@
+import numpy as np
 import os
+import pickle
 import random
 
 input_txt_path = os.path.join(os.path.dirname(__file__), 'input.txt')
 
 class Encoding:
-    def __init__(self, text=None):
-        self.encoding = {}
-        self.decoding = {}
-        if text is None:
-            text = open(input_txt_path).read()
+    def __init__(self):
+        print("creating encoding...")
+        self.stoi = {}
+        self.itos = {}
+        text = open(input_txt_path).read()
         chars = set()
         for ch in text:
             chars.add(ch)
         for ch in sorted(chars):
-            self.encoding[ch] = len(self.encoding)
-            self.decoding[self.encoding[ch]] = ch
-            print(f"{repr(ch)} -> {self.encoding[ch]}")
+            self.stoi[ch] = len(self.stoi)
+            self.itos[self.stoi[ch]] = ch
+            print(f"{repr(ch)} -> {self.stoi[ch]}")
+        self.vocab_size = len(self.stoi)
 
     def encode(self, s):
-        return [self.encoding[c] for c in s]
+        return np.array([self.stoi[c] for c in s], dtype=np.uint8)
 
     def decode(self, l):
-        return "".join([self.decoding[c] for c in l])
+        return "".join([self.itos[c] for c in l])
 
 
 def generate_digits():
@@ -49,13 +52,36 @@ def generate_str():
 def main():
     train_bin_path = os.path.join(os.path.dirname(__file__), 'train.bin')
     val_bin_path = os.path.join(os.path.dirname(__file__), 'val.bin')
+    meta_path = os.path.join(os.path.dirname(__file__), 'meta.pkl')
 
+    # generate the input.txt file
     num_lines = 40000
     lines = [generate_str() for _ in range(num_lines)]
     text = "".join([line + "\n" for line in lines])
-    enc = Encoding(text)
+
+    # generate the train and val bin files
+    enc = Encoding()
     with open(input_txt_path, 'w') as f:
         f.write(text)
+    ids = enc.encode(text)
+    cut = int(len(ids) * 0.9)
+    train_ids = ids[:cut]
+    print(f"train has {len(train_ids):,} tokens")
+    val_ids = ids[cut:]
+    print(f"val has {len(val_ids):,} tokens")
+    train_ids = np.array(train_ids, dtype=np.uint8)
+    val_ids = np.array(val_ids, dtype=np.uint8)
+    train_ids.tofile(train_bin_path)
+    val_ids.tofile(val_bin_path)
+
+    # save the meta information
+    meta = {
+        'vocab_size': enc.vocab_size,
+        'itos': enc.itos,
+        'stoi': enc.stoi,
+    }
+    with open(meta_path, 'wb') as f:
+        pickle.dump(meta, f)
 
 
 if __name__ == "__main__":
