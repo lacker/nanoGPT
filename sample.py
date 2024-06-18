@@ -7,6 +7,7 @@ from contextlib import nullcontext
 import torch
 import tiktoken
 from model import GPTConfig, GPT
+from data.bitstrings.prepare import generate_str
 
 # -----------------------------------------------------------------------------
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
@@ -74,16 +75,29 @@ else:
     decode = lambda l: enc.decode(l)
 
 # encode the beginning of the prompt
-if start.startswith('FILE:'):
-    with open(start[5:], 'r', encoding='utf-8') as f:
-        start = f.read()
-start_ids = encode(start)
-x = (torch.tensor(start_ids, dtype=torch.long, device=device)[None, ...])
+# if start.startswith('FILE:'):
+#     with open(start[5:], 'r', encoding='utf-8') as f:
+#         start = f.read()
+# start_ids = encode(start)
+# x = (torch.tensor(start_ids, dtype=torch.long, device=device)[None, ...])
 
 # run generation
 with torch.no_grad():
     with ctx:
         for k in range(num_samples):
-            y = model.generate(x, max_new_tokens, temperature=temperature, top_k=top_k)
-            print(decode(y[0].tolist()))
+            target = generate_str()
+            question, right_answer = target.split("=")
+            print("question:", question)
+            print("right answer:", right_answer)
+            start = question + "="
+            start_ids = encode(start)
+            x = (torch.tensor(start_ids, dtype=torch.long, device=device)[None, ...])
+            y = model.generate(x, 16, temperature=temperature, top_k=top_k)
+            y_str = decode(y[0].tolist())
+            model_answer = f"malformed answer: {repr(y_str)}"
+            if "=" in y_str:
+                post_eq = y_str.split("=", 1)[1]
+                if "\n" in post_eq:
+                    model_answer = post_eq.split("\n")[0]
+            print("model answer:", model_answer)
             print('---------------')
