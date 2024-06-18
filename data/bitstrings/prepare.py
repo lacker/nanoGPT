@@ -46,8 +46,18 @@ def generate_f():
     f_func = lambda digits: [9 - digit for digit in digits]
     return make_string("F", f_func)
 
+def generate_add():
+    lhs = random.randrange(1000)
+    rhs = random.randrange(1000)
+    return f"{lhs}+{rhs}={lhs+rhs}"
+
+def generate_mul():
+    lhs = random.randrange(100)
+    rhs = random.randrange(10000)
+    return f"{lhs}*{rhs}={lhs*rhs}"
+
 def generate_str():
-    return random.choice([generate_r, generate_f])()
+    return random.choice([generate_mul])()
 
 def main():
     train_bin_path = os.path.join(os.path.dirname(__file__), 'train.bin')
@@ -60,9 +70,9 @@ def main():
     text = "".join([line + "\n" for line in lines])
 
     # generate the train and val bin files
-    enc = Encoding()
     with open(input_txt_path, 'w') as f:
         f.write(text)
+    enc = Encoding()
     ids = enc.encode(text)
     cut = int(len(ids) * 0.9)
     train_ids = ids[:cut]
