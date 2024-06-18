@@ -55,7 +55,7 @@ def main():
     meta_path = os.path.join(os.path.dirname(__file__), 'meta.pkl')
 
     # generate the input.txt file
-    num_lines = 40000
+    num_lines = 100000
     lines = [generate_str() for _ in range(num_lines)]
     text = "".join([line + "\n" for line in lines])
 
@@ -69,8 +69,8 @@ def main():
     print(f"train has {len(train_ids):,} tokens")
     val_ids = ids[cut:]
     print(f"val has {len(val_ids):,} tokens")
-    train_ids = np.array(train_ids, dtype=np.uint8)
-    val_ids = np.array(val_ids, dtype=np.uint8)
+    train_ids = np.array(train_ids, dtype=np.uint16)
+    val_ids = np.array(val_ids, dtype=np.uint16)
     train_ids.tofile(train_bin_path)
     val_ids.tofile(val_bin_path)
 
