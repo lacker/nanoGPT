@@ -13,7 +13,7 @@ from data.bitstrings.prepare import generate_str
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
 out_dir = 'out' # ignored if init_from is not 'resume'
 start = "\n" # or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
-num_samples = 10 # number of samples to draw
+num_samples = 20 # number of samples to draw
 max_new_tokens = 500 # number of tokens generated in each sample
 temperature = 0.8 # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
 top_k = 200 # retain only the top_k most likely tokens, clamp others to have 0 probability
@@ -82,6 +82,7 @@ else:
 # x = (torch.tensor(start_ids, dtype=torch.long, device=device)[None, ...])
 
 # run generation
+score = 0
 with torch.no_grad():
     with ctx:
         for k in range(num_samples):
@@ -100,4 +101,11 @@ with torch.no_grad():
                 if "\n" in post_eq:
                     model_answer = post_eq.split("\n")[0]
             print("model answer:", model_answer)
+            if model_answer == right_answer:
+                score += 1
+                print("correct")
+            else:
+                print("wrong")
             print('---------------')
+
+print(f"score: {score}/{num_samples}")
